@@ -1,11 +1,11 @@
 ### 一、安装
 #### 1.1 克隆代码
 ```shell
-git clone https://github.com/disingn/wxtoken.git
+git clone https://github.com/disingn/cliptalk.git
 ```
 #### 1.2 构建程序
 ```shell
-cd wxtoken
+cd cliptalk
 export GOOS=linux                                                             
 export GOARCH=amd64
 go build -o cliptalk
@@ -40,7 +40,7 @@ Sever:
 这个自己使用宝塔或者 1panel 都可以，这里就不多说了
 
 ### 二、使用
-#### 2.1 配置微信公众号
+#### 2.1 接口
 抖音去水印接口请求方式 POST 请求 请求地址：/remove 示例如下：
 ```shell
 curl --location --request POST 'localhost:3100/remove' \
