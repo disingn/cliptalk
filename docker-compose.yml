@@ -1,0 +1,8 @@
+version: '3.8'
+services:
+  cliptalk:
+    image: xyy001/cliptalk:latest
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./config.yaml:/config.yaml # 将宿主机上的config.yaml文件映射到容器的/config.yaml

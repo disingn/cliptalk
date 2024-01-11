@@ -1,0 +1,13 @@
+App:
+  #Gemini 的 apikey
+  GeminiKey:
+    - key1
+    - key2
+  #浏览器的 UserAgent 用来解析抖音链接
+  UserAgents:
+    - Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Safari/605.2.15
+    - Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.104 Safari/537.66
+#服务器配置
+Sever:
+    Port: 3100
+    Host: localhost
