@@ -1,20 +1,48 @@
-### 一、安装
-#### 1.1 克隆代码
+# ClipTalk
+[![forthebadge made-with-go](http://ForTheBadge.com/images/badges/made-with-go.svg)](https://go.dev/)
+
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/disingn/cliptalk/actions)
+[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/disingn/cliptalk.svg?style=social&label=Star)](https://GitHub.com/disingn/cliptalk/stargazers/)
+
+
+ClipTalk 是一个用于去除抖音视频水印和将视频转为文本的工具。
+
+## 目录
+
+- [安装](#安装)
+- [使用](#使用)
+- [Docker 部署](#docker-部署)
+- [其他](#其他)
+- [联系我们](#联系我们)
+
+## 安装
+
+### 克隆代码
+
 ```shell
 git clone https://github.com/disingn/cliptalk.git
 ```
-#### 1.2 构建程序
+
+### 构建程序
+
 ```shell
 cd cliptalk
-export GOOS=linux                                                             
+export GOOS=linux
 export GOARCH=amd64
 go build -o cliptalk
 ```
-#### 1.3 配置文件
+
+### 配置文件
+
+复制示例配置文件并修改：
+
 ```shell
 cp config.yaml.example config.yaml
 ```
-修改配置文件
+
+编辑 `config.yaml` 文件，填入必要的配置信息：
+
 ```yaml
 App:
   #Gemini 的 apikey
@@ -43,18 +71,51 @@ Sever:
 Proxy:
   Protocol: 
 ```
-嫌麻烦可以直接用实例的配置文件
 
-#### 1.4 启动程序
+如果你觉得配置过程繁琐，可以直接使用实例的配置文件。
+
+### 启动程序
+
 ```shell
 ./cliptalk
 ```
-#### 1.5 配置Nginx反代
-这个自己使用宝塔或者 1panel 都可以，这里就不多说了
 
-### 二、使用
-#### 2.1 接口
-抖音去水印接口请求方式 POST 请求 请求地址：/remove 示例如下：
+### 配置 Nginx 反代
+
+请参考 Nginx 官方文档进行配置，或使用宝塔、1panel 等工具。
+
+## 使用
+
+### 接口
+
+#### 抖音去水印接口
+
+请求方式：POST
+请求地址：`/remove`
+
+示例：
+
+```shell
+# 示例请求...
+```
+
+返回的 JSON 参数：
+
+```json
+{
+  "finalUrl": "去除水印的视频链接",
+  "message": "success",
+  "title": "视频标题"
+}
+```
+
+#### 抖音视频转文本接口
+
+请求方式：POST
+请求地址：`/video`
+
+示例：
+
 ```shell
 curl --location --request POST 'localhost:3100/remove' \
 --header 'Content-Type: application/json' \
@@ -62,48 +123,39 @@ curl --location --request POST 'localhost:3100/remove' \
     "url":"https://v.douyin.com/iLYNG8vA/"
 }'
 ```
-返回的 json 参数：
+
+返回的 JSON 参数：
+
 ```json
 {
-    "finalUrl": "去除水印的视频链接",
-    "message": "success",
-    "title": "视频标题"
+  "finalUrl": "去除水印的视频链接",
+  "message": "success",
+  "title": "视频标题",
+  "desc": "视频文本"
 }
 ```
----
-抖音视频转文本接口请求方式 POST 请求 请求地址：/video 示例如下：
-```shell
-curl --location --request POST 'localhost:3100/video' \
---header 'Content-Type: application/json' \
---data-raw '{
-    "url":"https://v.douyin.com/iLYnjXbA/",
-    "model":"openai" //这里的 model 可以是 openai 或者 gemini
-}'
-```
-返回的 json 参数：
-```json
-{
-    "finalUrl": "去除水印的视频链接",
-    "message": "success",
-    "title": "视频标题",
-    "desc": "视频文本"
-}
-```
----
-docker 部署：
-#### 1.1准备工作
-安装 docker 和 docker-compose （这里建议使用 docker-compose）
-#### 1.2 部署
+
+## Docker 部署
+
+### 准备工作
+
+确保已安装 Docker 和 Docker Compose。
+
+### 部署
+
 ```shell
 cd cliptalk
 docker-compose up -d
 ```
 
-### 三、其他
-其他的就都和上面的一样了，如果有问题可以加群讨论
+## 其他
 
-QQ: 814702872
+如果在使用过程中遇到问题，请加入我们的 QQ 群进行讨论。
 
+QQ 群: 814702872
 
+## 联系我们
 
+如有任何疑问或需要支持，请通过以下方式联系我们：
 
+[![联系我们 !](https://img.shields.io/badge/Ask%20me-anything-1abc9c.svg)]([https://GitHub.com/Naereen/ama](https://github.com/disingn/cliptalk/issues))
