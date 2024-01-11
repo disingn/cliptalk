@@ -9,4 +9,8 @@ type Config struct {
 		Host string `yaml:"Host"`
 		Port string `yaml:"Port"`
 	}
+	Proxy struct {
+		Protocol string `yaml:"Protocol"`  //Protocol 留空 表示不用代理
+	}
+	
 }

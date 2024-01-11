@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"sync"
 	"time"
+	"net/url"
 )
 
 func randKey() string {
@@ -18,9 +19,9 @@ func randKey() string {
 	return cfg.Config.App.GeminiKey[rand.Intn(len(cfg.Config.App.GeminiKey))]
 }
 
-func Newclient(){
+func Newclient() *http.Client {
 	
-	if (cfg.Config.Proxy) {
+	if (cfg.Config.Proxy.Protocol !="") {
 		// 设置代理地址
 		proxyURL, err := url.Parse(cfg.Config.Proxy.Protocol)
 		if err != nil {
@@ -165,7 +166,7 @@ func SetGemini(content string) (error, string) {
 	if err != nil {
 		return fmt.Errorf("error marshaling payload: %v", err), ""
 	}
-	
+
 	// client := &http.Client{}
 	client :=Newclient()
 
