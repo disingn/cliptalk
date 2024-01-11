@@ -11,11 +11,44 @@ import (
 	"net/http"
 	"sync"
 	"time"
+	"net/url"
 )
 
 func randKey() string {
 	rand.Seed(time.Now().UnixNano())
 	return cfg.Config.App.GeminiKey[rand.Intn(len(cfg.Config.App.GeminiKey))]
+}
+
+func Newclient() *http.Client {
+	
+	if (cfg.Config.Proxy.Protocol !="") {
+		// 设置代理地址
+		proxyURL, err := url.Parse(cfg.Config.Proxy.Protocol)
+		if err != nil {
+			fmt.Println("设置代理出错:", err)
+			fmt.Println("用默认直连")
+			client := &http.Client{}
+			return client
+		}
+
+		fmt.Println("gemimni 用代理\n代理地址:", proxyURL)
+
+		// 创建一个自定义的 Transport
+		transport := &http.Transport{
+			Proxy: http.ProxyURL(proxyURL),
+		}
+
+		// 使用自定义的 Transport 创建一个 http.Client
+		client := &http.Client{
+			Transport: transport,
+		}
+		return client
+
+	} else {
+		fmt.Println("直连所有")
+		client := &http.Client{}
+		return client
+	}
 }
 
 var FrameDescriptions []string
@@ -52,7 +85,9 @@ func SetGeminiV(data model.FrameInfo) error {
 		return fmt.Errorf("error marshaling payload: %v", err)
 	}
 
-	client := &http.Client{}
+	//client := &http.Client{}
+	client :=Newclient()
+
 	req, err := http.NewRequest(method, url, bytes.NewReader(payloadBytes))
 	if err != nil {
 		return fmt.Errorf("error creating request: %v", err)
@@ -131,7 +166,10 @@ func SetGemini(content string) (error, string) {
 	if err != nil {
 		return fmt.Errorf("error marshaling payload: %v", err), ""
 	}
-	client := &http.Client{}
+
+	// client := &http.Client{}
+	client :=Newclient()
+
 	req, err := http.NewRequest(method, url, bytes.NewReader(payloadBytes))
 
 	if err != nil {
