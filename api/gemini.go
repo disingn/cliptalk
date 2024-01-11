@@ -15,9 +15,9 @@ import (
 	"time"
 )
 
-func randKey() string {
+func RandKey(t []string) string {
 	rand.Seed(time.Now().UnixNano())
-	return cfg.Config.App.GeminiKey[rand.Intn(len(cfg.Config.App.GeminiKey))]
+	return t[rand.Intn(len(t))]
 }
 
 func NewClient() *http.Client {
@@ -53,7 +53,7 @@ func NewClient() *http.Client {
 }
 
 var FrameDescriptions []string
-var mu sync.Mutex // 用于保护frameDescriptions切片的互斥锁
+var Mu sync.Mutex // 用于保护frameDescriptions切片的互斥锁
 
 func SetGeminiV(data model.FrameInfo) error {
 	// 确保Base64数据非空
@@ -61,7 +61,7 @@ func SetGeminiV(data model.FrameInfo) error {
 		return fmt.Errorf("base64 data is empty")
 	}
 
-	_url := fmt.Sprintf("https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent?key=%s", randKey())
+	_url := fmt.Sprintf("https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent?key=%s", RandKey(cfg.Config.App.GeminiKey))
 	method := "POST"
 
 	payload := model.GeminiData{
@@ -135,20 +135,14 @@ func SetGeminiV(data model.FrameInfo) error {
 		data.FrameIndex,
 		geminiResponse.Candidates[0].Content.Parts[0].Text)
 	// 使用互斥锁来保护对共享切片的写入
-	mu.Lock()
+	Mu.Lock()
 	FrameDescriptions = append(FrameDescriptions, frameDescription)
-	mu.Unlock()
-	// 输出响应内容
-	//log.Printf("片段 %d中的第 %d帧的内容是%s",
-	//	data.SegmentIndex,
-	//	data.FrameIndex,
-	//	geminiResponse.Candidates[0].Content.Parts[0].Text)
-
+	Mu.Unlock()
 	return nil
 }
 
 func SetGemini(content string) (error, string) {
-	_url := fmt.Sprintf("https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=%s", randKey())
+	_url := fmt.Sprintf("https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=%s", RandKey(cfg.Config.App.GeminiKey))
 	method := "POST"
 
 	payload := model.GeminiPro{
@@ -176,11 +170,7 @@ func SetGemini(content string) (error, string) {
 	if err != nil {
 		return fmt.Errorf("error creating request: %v", err), ""
 	}
-	req.Header.Add("User-Agent", "Apifox/1.0.0 (https://apifox.com)")
 	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("Accept", "*/*")
-	req.Header.Add("Host", "generativelanguage.googleapis.com")
-	req.Header.Add("Connection", "keep-alive")
 
 	res, err := client.Do(req)
 	if err != nil {
@@ -192,6 +182,7 @@ func SetGemini(content string) (error, string) {
 	if err != nil {
 		return fmt.Errorf("error reading response body: %v", err), ""
 	}
+	log.Println(string(body))
 	if res.StatusCode != 200 {
 		return fmt.Errorf("status code error: %d %s", res.StatusCode, string(body)), ""
 	}

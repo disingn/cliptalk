@@ -7,6 +7,11 @@ App:
   UserAgents:
     - Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Safari/605.2.15
     - Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.104 Safari/537.66
+  #注意：这里的 OpenaiUrl 最后面不带 / 你也可以修改成你自己反代的地址或者兼容 OpenAI 的地址
+  OpenaiUrl: https://api.openai.com
+  OpenaiKey:
+    - key1
+    - key2
 #服务器配置
 Sever:
     Port: 3100

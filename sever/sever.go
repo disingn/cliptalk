@@ -20,6 +20,9 @@ func VideoProcessing() fiber.Handler {
 				"error":   "url is empty",
 			})
 		}
+		if len(data["model"]) == 0 {
+			data["model"] = "gemini"
+		}
 		videoIdOrLink := api.ProcessUserInput(data["url"])
 		var videoId string
 		if videoIdOrLink != "" {
@@ -43,7 +46,7 @@ func VideoProcessing() fiber.Handler {
 				"error":   err.Error(),
 			})
 		}
-		err, d := api.VideoSlice(finalUrl)
+		err, d := api.VideoSlice(finalUrl, data["model"])
 		if err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"message": "出现未知的错误，请重试",

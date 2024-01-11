@@ -25,10 +25,15 @@ App:
   UserAgents:
     - Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Safari/605.2.15
     - Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.104 Safari/537.66
+  #注意：这里的 OpenaiUrl 最后面不带 / 你也可以修改成你自己反代的地址或者兼容 OpenAI 的地址
+  OpenaiUrl: https://api.openai.com
+  OpenaiKey:
+    - key1
+    - key2
 #服务器配置
 Sever:
-    Port: 3100
-    Host: localhost
+  Port: 3100
+  Host: localhost
 
 # #代理配置 用代理( http|https|socks5://ip:port ) 
 # Proxy:
@@ -36,7 +41,7 @@ Sever:
 
 #代理配置 不用代理 
 Proxy:
-    Protocol: 
+  Protocol: 
 ```
 嫌麻烦可以直接用实例的配置文件
 
@@ -71,7 +76,8 @@ curl --location --request POST 'localhost:3100/remove' \
 curl --location --request POST 'localhost:3100/video' \
 --header 'Content-Type: application/json' \
 --data-raw '{
-    "url":"https://v.douyin.com/iLYNG8vA/"
+    "url":"https://v.douyin.com/iLYnjXbA/",
+    "model":"openai" //这里的 model 可以是 openai 或者 gemini
 }'
 ```
 返回的 json 参数：

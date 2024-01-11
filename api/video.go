@@ -145,7 +145,7 @@ func getVideoDuration(videoURL string) (float64, error) {
 	return 0, fmt.Errorf("unable to parse duration from ffmpeg output")
 }
 
-func VideoSlice(videoURL string) (error, string) {
+func VideoSlice(videoURL, m string) (error, string) {
 	segments := 6 // 分成6段
 	duration, err := getVideoDuration(videoURL)
 	if err != nil {
@@ -219,10 +219,18 @@ func VideoSlice(videoURL string) (error, string) {
 							Base64Data:   base64Data,
 						}
 						frameIndex++
-						if err := SetGeminiV(frameInfo); err != nil {
-							log.Printf("Error processing frame info: %s\n", err)
-							continue
+						if m == "gemini" {
+							if err := SetGeminiV(frameInfo); err != nil {
+								log.Printf("Error processing frame info: %s\n", err)
+								continue
+							}
+						} else if m == "openai" {
+							if err := SetGptV(frameInfo); err != nil {
+								log.Printf("Error processing frame info: %s\n", err)
+								continue
+							}
 						}
+
 					}
 				}
 			}
@@ -237,9 +245,17 @@ func VideoSlice(videoURL string) (error, string) {
 	wg.Wait() // 等待所有goroutine完成
 	fullDescription := strings.Join(FrameDescriptions, " ")
 	//fmt.Println("Full description:", fullDescription)
-	err, d := SetGemini(fullDescription)
-	if err != nil {
-		return err, ""
+	d := ""
+	if m == "gemini" {
+		err, d = SetGemini(fullDescription)
+		if err != nil {
+			return err, ""
+		}
+	} else if m == "openai" {
+		err, d = SetGpt(fullDescription)
+		if err != nil {
+			return err, ""
+		}
 	}
 	return nil, d
 }
