@@ -27,8 +27,16 @@ App:
     - Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.104 Safari/537.66
 #服务器配置
 Sever:
-  Port: 3100
-  Host: localhost
+    Port: 3100
+    Host: localhost
+
+# #代理配置 用代理( http|https|socks5://ip:port ) 
+# Proxy:
+#     Protocol: socks5://192.168.1.10:3200
+
+#代理配置 不用代理 
+Proxy:
+    Protocol: 
 ```
 嫌麻烦可以直接用实例的配置文件
 

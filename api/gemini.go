@@ -7,11 +7,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"math/rand"
 	"net/http"
+	"net/url"
 	"sync"
 	"time"
-	"net/url"
 )
 
 func randKey() string {
@@ -19,19 +20,19 @@ func randKey() string {
 	return cfg.Config.App.GeminiKey[rand.Intn(len(cfg.Config.App.GeminiKey))]
 }
 
-func Newclient() *http.Client {
-	
-	if (cfg.Config.Proxy.Protocol !="") {
+func NewClient() *http.Client {
+
+	if cfg.Config.Proxy.Protocol != "" {
 		// 设置代理地址
 		proxyURL, err := url.Parse(cfg.Config.Proxy.Protocol)
 		if err != nil {
-			fmt.Println("设置代理出错:", err)
-			fmt.Println("用默认直连")
+			log.Println("设置代理出错:", err)
+			log.Println("用默认直连")
 			client := &http.Client{}
 			return client
 		}
 
-		fmt.Println("gemimni 用代理\n代理地址:", proxyURL)
+		log.Println("gemimni 用代理\n代理地址:", proxyURL)
 
 		// 创建一个自定义的 Transport
 		transport := &http.Transport{
@@ -45,7 +46,7 @@ func Newclient() *http.Client {
 		return client
 
 	} else {
-		fmt.Println("直连所有")
+		log.Println("直连所有")
 		client := &http.Client{}
 		return client
 	}
@@ -60,7 +61,7 @@ func SetGeminiV(data model.FrameInfo) error {
 		return fmt.Errorf("base64 data is empty")
 	}
 
-	url := fmt.Sprintf("https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent?key=%s", randKey())
+	_url := fmt.Sprintf("https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent?key=%s", randKey())
 	method := "POST"
 
 	payload := model.GeminiData{
@@ -86,9 +87,9 @@ func SetGeminiV(data model.FrameInfo) error {
 	}
 
 	//client := &http.Client{}
-	client :=Newclient()
+	client := NewClient()
 
-	req, err := http.NewRequest(method, url, bytes.NewReader(payloadBytes))
+	req, err := http.NewRequest(method, _url, bytes.NewReader(payloadBytes))
 	if err != nil {
 		return fmt.Errorf("error creating request: %v", err)
 	}
@@ -147,7 +148,7 @@ func SetGeminiV(data model.FrameInfo) error {
 }
 
 func SetGemini(content string) (error, string) {
-	url := fmt.Sprintf("https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=%s", randKey())
+	_url := fmt.Sprintf("https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=%s", randKey())
 	method := "POST"
 
 	payload := model.GeminiPro{
@@ -168,9 +169,9 @@ func SetGemini(content string) (error, string) {
 	}
 
 	// client := &http.Client{}
-	client :=Newclient()
+	client := NewClient()
 
-	req, err := http.NewRequest(method, url, bytes.NewReader(payloadBytes))
+	req, err := http.NewRequest(method, _url, bytes.NewReader(payloadBytes))
 
 	if err != nil {
 		return fmt.Errorf("error creating request: %v", err), ""
