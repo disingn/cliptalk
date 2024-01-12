@@ -124,7 +124,8 @@ curl --location --request POST 'localhost:3100/remove' \
 curl --location --request POST 'localhost:3100/video' \
 --header 'Content-Type: application/json' \
 --data-raw '{
-    "url":"https://v.douyin.com/iLYNG8vA/"
+    "url":"https://v.douyin.com/iLYnjXbA/",
+    "model":"openai" //这里的 model 可以是 openai 或者 gemini
 }'
 ```
 
