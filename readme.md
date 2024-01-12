@@ -51,6 +51,10 @@ App:
   GeminiKey:
     - key1
     - key2
+  # 自定义的 Gemini 的 url 地址 可以使用https://zhile.io/2023/12/24/gemini-pro-proxy.html#more-587来做代理
+  # ps: 代理地址不要带最后的/
+  #配置了 GeminiUrl 就不需要配置 Proxy
+  GeminiUrl: https://gemini.baipiao.io
   #浏览器的 UserAgent 用来解析抖音链接
   UserAgents:
     - Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Safari/605.2.15
@@ -64,7 +68,8 @@ App:
 Sever:
   Port: 3100
   Host: localhost
-
+  #可以上传的文件大小 单位MB 默认10MB 不要写 0
+  MaxFileSize: 10
 # #代理配置 用代理( http|https|socks5://ip:port ) 
 # Proxy:
 #     Protocol: socks5://192.168.1.10:3200
@@ -138,7 +143,7 @@ curl --location --request POST 'localhost:3100/video' \
   "finalUrl": "去除水印的视频链接",
   "message": "success",
   "title": "视频标题",
-  "desc": "视频文本"
+  "content": "视频文本"
 }
 ```
 ### 本地视频转文本接口
@@ -148,7 +153,15 @@ curl --location --request POST 'localhost:3100/video' \
 示例：
 
 ```shell
-
+curl --location --request POST 'localhost:3100/video-file' \
+--form 'file=@"/test.mp4"' \
+--form 'model="openai"'
+```
+返回的 json 参数：
+```json
+{
+  "content": "视频文本"
+}
 ```
 
 ## Docker 部署 <a name="Docker 部署"></a>
