@@ -3,6 +3,7 @@ package sever
 import (
 	"douyinshibie/api"
 	"github.com/gofiber/fiber/v2"
+	"path/filepath"
 	"strings"
 )
 
@@ -63,6 +64,56 @@ func VideoProcessing() fiber.Handler {
 			"title":    title,
 			"finalUrl": finalUrl,
 			"content":  d,
+		})
+	}
+}
+
+// isAllowedVideoExtension 检查文件扩展名是否为允许的视频扩展名
+func isAllowedVideoExtension(ext string) bool {
+	allowedExtensions := []string{".mp4", ".avi", ".mov", ".wmv", ".mkv"}
+	for _, allowedExt := range allowedExtensions {
+		if ext == allowedExt {
+			return true
+		}
+	}
+	return false
+}
+
+func VideoFileProcessing() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		file, err := c.FormFile("file")
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"message": "文件上传失败，请重试",
+				"error":   err.Error(),
+			})
+		}
+		if !isAllowedVideoExtension(filepath.Ext(file.Filename)) {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"message": "文件格式错误，请上传mp4、avi、mov、wmv、mkv格式的视频",
+				"error":   "Invalid file extension: " + filepath.Ext(file.Filename),
+			})
+		}
+
+		model := c.FormValue("model")
+		if len(model) == 0 {
+			model = "gemini"
+		}
+		fileStream, err := file.Open()
+		if err != nil {
+			return err
+		}
+		defer fileStream.Close()
+		err, s := api.VideoFileSlice(fileStream, model)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"message": " 视频解析出现错误，请重试",
+				"error":   err.Error(),
+			})
+		}
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{
+			"message": "success",
+			"content": s,
 		})
 	}
 }

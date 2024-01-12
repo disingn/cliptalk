@@ -9,8 +9,9 @@ type Config struct {
 		OpenaiKey  []string `yaml:"OpenaiKey"`
 	} `yaml:"App"`
 	Sever struct {
-		Host string `yaml:"Host"`
-		Port string `yaml:"Port"`
+		Host        string `yaml:"Host"`
+		Port        string `yaml:"Port"`
+		MaxFileSize int    `yaml:"MaxFileSize"`
 	}
 	Proxy struct {
 		Protocol string `yaml:"Protocol"` //Protocol 留空 表示不用代理

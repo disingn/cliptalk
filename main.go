@@ -13,10 +13,13 @@ func init() {
 }
 
 func main() {
-	r := fiber.New()
+	r := fiber.New(fiber.Config{
+		BodyLimit: cfg.Config.Sever.MaxFileSize * 1024 * 1024,
+	})
 	r.Use(cors.New(cors.ConfigDefault))
 	r.Use(logger.New(logger.ConfigDefault))
 	r.Post("/video", sever.VideoProcessing())
 	r.Post("/remove", sever.RemoveWatermark())
+	r.Post("/video-file", sever.VideoFileProcessing())
 	r.Listen(":" + cfg.Config.Sever.Port)
 }

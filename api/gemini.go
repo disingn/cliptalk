@@ -69,7 +69,7 @@ func SetGeminiV(data model.FrameInfo) error {
 			{
 				Parts: []model.Parts{
 					{
-						Text: fmt.Sprintf("这个图片是一段视频中第%d的第%d帧，他的详细内容内容是什么？比如有什么人物，他们在做什么动作，说什么话。这个时候你就是一个视频脚本分析大师，你应该剖析他们原本的剧情或者画面呈现的东西，你应该直接输出告诉我视频这一帧呈现的内容，现在请开始你分析：", data.SegmentIndex, data.FrameIndex),
+						Text: fmt.Sprintf("这个图片是一段视频中第%d段的第%d帧，他的详细内容内容是什么？比如有什么人物，他们在做什么动作，说什么话。这个时候你就是一个视频脚本分析大师，你应该剖析他们原本的剧情或者画面呈现的东西，你应该直接输出告诉我视频这一帧呈现的内容，现在请开始你分析：", data.SegmentIndex, data.FrameIndex),
 					},
 					{
 						InlineData: &model.InlineData{

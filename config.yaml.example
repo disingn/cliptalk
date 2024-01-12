@@ -20,7 +20,8 @@ App:
 Sever:
     Port: 3100
     Host: localhost
-
+    #可以上传的文件大小 单位MB 默认10MB 不要写 0
+    MaxFileSize: 10
 # #代理配置 用代理( http|https|socks5://ip:port ) 
 # Proxy:
 #     Protocol: socks5://192.168.1.10:3200

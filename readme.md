@@ -141,6 +141,15 @@ curl --location --request POST 'localhost:3100/video' \
   "desc": "视频文本"
 }
 ```
+### 本地视频转文本接口
+请求方式：POST
+请求地址：`/video-file`
+
+示例：
+
+```shell
+
+```
 
 ## Docker 部署 <a name="Docker 部署"></a>
 

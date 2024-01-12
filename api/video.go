@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"douyinshibie/model"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -144,6 +145,133 @@ func VideoSlice(videoURL, m string) (error, string) {
 		}(i)
 	}
 	wg.Wait() // 等待所有goroutine完成
+	fullDescription := strings.Join(FrameDescriptions, " ")
+	//fmt.Println("Full description:", fullDescription)
+	d := ""
+	if m == "gemini" {
+		err, d = SetGemini(fullDescription)
+		if err != nil {
+			return err, ""
+		}
+	} else if m == "openai" {
+		err, d = SetGpt(fullDescription)
+		if err != nil {
+			return err, ""
+		}
+	}
+	return nil, d
+}
+
+// getVideoDurationFromStream 从视频流中获取视频的持续时间
+func getVideoDurationFromStream(videoStream io.Reader) (float64, error) {
+	cmd := exec.Command("ffprobe",
+		"-i", "pipe:0", // 从标准输入读取视频数据
+		"-show_entries", "format=duration",
+		"-print_format", "json",
+		"-v", "quiet",
+	)
+	cmd.Stdin = videoStream
+
+	output, err := cmd.Output()
+	if err != nil {
+		log.Println("Error running ffprobe:", err)
+		return 0, err
+	}
+
+	// 解析输出以获取视频持续时间
+	var info model.VideoInfo
+	if err := json.Unmarshal(output, &info); err != nil {
+		log.Println("Error running ffprobe Unmarshal:", err)
+		return 0, err
+	}
+
+	// 将持续时间字符串转换为 float64
+	duration, err := strconv.ParseFloat(info.Format.Duration, 64)
+	if err != nil {
+		log.Println("Error parsing duration:", err)
+		return 0, err
+	}
+
+	return duration, nil
+}
+
+func VideoFileSlice(videoStream io.Reader, m string) (error, string) {
+
+	cmd := exec.Command(
+		"ffmpeg",
+		"-i", "pipe:0", // 使用管道作为输入
+		"-vf", "fps=1/5,scale=iw/5:-1", // 降低帧率和分辨率
+		"-f", "image2pipe",
+		"-vcodec", "mjpeg",
+		"pipe:1",
+	)
+	cmd.Stdin = videoStream
+
+	// 创建管道
+	stdoutPipe, err := cmd.StdoutPipe()
+	if err != nil {
+		log.Printf("Error creating stdout pipe: %s\n", err)
+		return err, ""
+	}
+
+	// 启动命令
+	if err := cmd.Start(); err != nil {
+		log.Printf("Error starting ffmpeg: %s\n", err)
+		return err, ""
+	}
+	// 读取数据并处理
+	buffer := make([]byte, 4096) // 用于存储从管道读取的数据
+	imageBuffer := new(bytes.Buffer)
+	var frameInfo model.FrameInfo // 存储图像数据和索引
+	var wg sync.WaitGroup
+	frameIndex := 0
+	for {
+		n, err := stdoutPipe.Read(buffer)
+		if err != nil {
+			if err == io.EOF {
+				break // 管道关闭，没有更多的数据
+			}
+			log.Printf("Error reading from stdout pipe: %s\n", err)
+			return err, ""
+		}
+		if n > 0 {
+			imageBuffer.Write(buffer[:n])
+			// 检查imageBuffer中是否存在JPEG结束标记
+			if idx := bytes.Index(imageBuffer.Bytes(), []byte("\xff\xd9")); idx != -1 {
+				// 截取到结束标记的部分作为一张完整的JPEG图像
+				jpegData := imageBuffer.Bytes()[:idx+2] // 包含结束标记
+				imageBuffer.Next(idx + 2)               // 移除已处理的JPEG图像数据
+
+				// 将 JPEG 图像编码为 Base64
+				base64Data := base64.StdEncoding.EncodeToString(jpegData)
+				frameInfo = model.FrameInfo{
+					SegmentIndex: 1,
+					FrameIndex:   frameIndex,
+					Base64Data:   base64Data,
+				}
+				frameIndex++
+				wg.Add(1)
+				go func(mode string, f model.FrameInfo) {
+					defer wg.Done()
+					if m == "gemini" {
+						if err := SetGeminiV(frameInfo); err != nil {
+							log.Printf("Error processing frame info: %s\n", err)
+						}
+					} else if m == "openai" {
+						if err := SetGptV(frameInfo); err != nil {
+							log.Printf("Error processing frame info: %s\n", err)
+						}
+					}
+				}(m, frameInfo)
+			}
+		}
+	}
+	wg.Wait()
+	// 等待命令完成
+	if err := cmd.Wait(); err != nil {
+		log.Printf("Error waiting for ffmpeg command to finish: %s\n", err)
+		return err, ""
+	}
 	fullDescription := strings.Join(FrameDescriptions, " ")
 	//fmt.Println("Full description:", fullDescription)
 	d := ""

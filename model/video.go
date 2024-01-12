@@ -7,6 +7,13 @@ type FrameInfo struct {
 	Base64Data   string `json:"base64_data"`
 }
 
+// VideoInfo 包含视频的基本信息
+type VideoInfo struct {
+	Format struct {
+		Duration string `json:"duration"` // 视频持续时间，以秒为单位
+	} `json:"format"`
+}
+
 type DouYinVideoInfo struct {
 	ItemList []struct {
 		Video struct {
