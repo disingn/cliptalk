@@ -46,7 +46,7 @@ func NewClient() *http.Client {
 		return client
 
 	} else {
-		log.Println("直连所有")
+		//log.Println("直连所有")
 		client := &http.Client{}
 		return client
 	}

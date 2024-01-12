@@ -3,6 +3,7 @@ package sever
 import (
 	"douyinshibie/api"
 	"github.com/gofiber/fiber/v2"
+	"strings"
 )
 
 func VideoProcessing() fiber.Handler {
@@ -23,27 +24,31 @@ func VideoProcessing() fiber.Handler {
 		if len(data["model"]) == 0 {
 			data["model"] = "gemini"
 		}
-		videoIdOrLink := api.ProcessUserInput(data["url"])
-		var videoId string
-		if videoIdOrLink != "" {
-			if api.IsNumeric(videoIdOrLink) {
-				videoId = videoIdOrLink
-			} else {
-				videoId = api.ExtractVideoId(videoIdOrLink)
+		var finalUrl, title string
+		if strings.Contains(data["url"], "tiktok.com") {
+			f, t, err := api.GetTikTokInfo(data["url"])
+			if err != nil {
+				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"message": " 视频链接解析失败，请检查视频链接是否正确",
+					"error":   err.Error(),
+				})
 			}
-		}
-		if len(videoId) == 0 {
+			finalUrl = f
+			title = t
+		} else if strings.Contains(data["url"], "douyin.com") {
+			f, t, err := api.GetDouYinInfo(data["url"])
+			if err != nil {
+				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"message": " 视频链接解析失败，请检查视频链接是否正确",
+					"error":   err.Error(),
+				})
+			}
+			finalUrl = f
+			title = t
+		} else {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"message": " 视频解释失败，请检查视频链接是否正确",
-				"error":   "videoId is not found",
-			})
-
-		}
-		finalUrl, title, err := api.GetVideoInfo(videoId)
-		if err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"message": " 解析失败，请检查视频链接是否正确",
-				"error":   err.Error(),
+				"message": "未知的视频链接，请检查视频链接是否正确",
+				"error":   "url is not tiktok or douyin",
 			})
 		}
 		err, d := api.VideoSlice(finalUrl, data["model"])
@@ -53,12 +58,11 @@ func VideoProcessing() fiber.Handler {
 				"error":   err.Error(),
 			})
 		}
-
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{
 			"message":  "success",
 			"title":    title,
 			"finalUrl": finalUrl,
-			"desc":     d,
+			"content":  d,
 		})
 	}
 }
@@ -79,27 +83,31 @@ func RemoveWatermark() fiber.Handler {
 				"error":   "url is empty",
 			})
 		}
-		videoIdOrLink := api.ProcessUserInput(data["url"])
-		var videoId string
-		if videoIdOrLink != "" {
-			if api.IsNumeric(videoIdOrLink) {
-				videoId = videoIdOrLink
-			} else {
-				videoId = api.ExtractVideoId(videoIdOrLink)
+		var finalUrl, title string
+		if strings.Contains(data["url"], "tiktok.com") {
+			f, t, err := api.GetTikTokInfo(data["url"])
+			if err != nil {
+				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"message": " 视频链接解析失败，请检查视频链接是否正确",
+					"error":   err.Error(),
+				})
 			}
-		}
-		if len(videoId) == 0 {
+			finalUrl = f
+			title = t
+		} else if strings.Contains(data["url"], "douyin.com") {
+			f, t, err := api.GetDouYinInfo(data["url"])
+			if err != nil {
+				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"message": " 视频链接解析失败，请检查视频链接是否正确",
+					"error":   err.Error(),
+				})
+			}
+			finalUrl = f
+			title = t
+		} else {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"message": " 视频解释失败，请检查视频链接是否正确",
-				"error":   "videoId is not found",
-			})
-
-		}
-		finalUrl, title, err := api.GetVideoInfo(videoId)
-		if err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"message": " 解析失败，请检查视频链接是否正确",
-				"error":   err.Error(),
+				"message": "未知的视频链接，请检查视频链接是否正确",
+				"error":   "url is not tiktok or douyin",
 			})
 		}
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{

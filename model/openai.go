@@ -42,3 +42,14 @@ type Content struct {
 type ImageURL struct {
 	URL string `json:"url"`
 }
+
+type GPTRequest struct {
+	Stream   bool         `json:"stream"`
+	Model    string       `json:"model"`
+	Messages []GPTMessage `json:"messages"`
+}
+
+type GPTMessage struct {
+	Role    string `json:"role"`
+	Content string `json:"content"`
+}

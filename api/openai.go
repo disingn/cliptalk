@@ -95,27 +95,32 @@ func SetGptV(data model.FrameInfo) error {
 func SetGpt(content string) (error, string) {
 	url := cfg.Config.App.OpenaiUrl + "/v1/chat/completions"
 	method := "POST"
-	contentStr := strings.TrimSuffix(content, "\n```")
-	contentStr = strings.ReplaceAll(contentStr, "\n", "")
+	//contentStr := strings.TrimSuffix(content, "\n```")
+	contentStr := strings.ReplaceAll(content, "\n", "")
 	contentStr = strings.ReplaceAll(contentStr, "\\", "")
+	contentStr = strings.ReplaceAll(contentStr, `"`, `\"`)
 
-	payload := strings.NewReader(fmt.Sprintf(`{
-    "stream": false,
-    "model": "gpt-4-0613",
-    "messages": [
-        {
-            "role": "system",
-            "content":"你现在是一个视频脚本整合大师。你的任务是将一系列乱序的视频片段整合成一个完整的故事。每个片段都包含了一系列帧的详细内容描述。由于这些片段是乱序的，你需要先找到第 0 片段的第 0 帧，这是视频的开头。从那里开始，确定每个片段及其帧的正确顺序，然后按照这个顺序来分析整个视频的内容。你的最终目标是输出一个连贯的视频内容脚本，该脚本详细地叙述了视频的全部故事线，包括所有关键的对话、场景和情感转变。请注意，你不需要输出处理的过程，只需要提供视频的完整内容概要。现在开始，请查看以下视频片段及其内容描述，并根据这些信息，从第 0 片段的第 0 帧开始，创建一个完整的视频内容脚本，最后请输出一个完成或一个大致的视频内容信息"
-        },
-        {
-            "role": "user",
-            "content": "视频片段解析内容：'%s'"
-        }
-    ]
-}`, contentStr))
+	payload := model.GPTRequest{
+		Stream: false,
+		Model:  "gpt-4-0613",
+		Messages: []model.GPTMessage{
+			{
+				Role:    "system",
+				Content: "你现在是一个视频脚本整合大师。你的任务是将一系列乱序的视频片段整合成一个完整的故事。每个片段都包含了一系列帧的详细内容描述。由于这些片段是乱序的，你需要先找到第 0 片段的第 0 帧，这是视频的开头。从那里开始，确定每个片段及其帧的正确顺序，然后按照这个顺序来分析整个视频的内容。你的最终目标是输出一个连贯的视频内容脚本，该脚本详细地叙述了视频的全部故事线，包括所有关键的对话、场景和情感转变。请注意，你不需要输出处理的过程，只需要提供视频的完整内容概要。现在开始，请查看以下视频片段及其内容描述，并根据这些信息，从第 0 片段的第 0 帧开始，创建一个完整的视频内容脚本，最后请输出一个完成或一个大致的视频内容信息",
+			},
+			{
+				Role:    "user",
+				Content: "视频片段解析内容：" + contentStr,
+			},
+		},
+	}
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		return fmt.Errorf("error marshaling payload: %v", err), ""
+	}
 
 	client := &http.Client{}
-	req, err := http.NewRequest(method, url, payload)
+	req, err := http.NewRequest(method, url, bytes.NewReader(payloadBytes))
 
 	if err != nil {
 		return fmt.Errorf("error creating request: %v", err), ""

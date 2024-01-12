@@ -17,3 +17,15 @@ type DouYinVideoInfo struct {
 		Desc string `json:"desc"`
 	} `json:"item_list"`
 }
+
+type TikTokVideoData struct {
+	StatusCode int `json:"status_code"`
+	ItemList   []struct {
+		Video struct {
+			PlayAddr struct {
+				URLList []string `json:"url_list"`
+			} `json:"play_addr"`
+		} `json:"video"`
+		Desc string `json:"desc"`
+	} `json:"aweme_list"`
+}

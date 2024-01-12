@@ -2,122 +2,17 @@ package api
 
 import (
 	"bytes"
-	"douyinshibie/cfg"
 	"douyinshibie/model"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"io"
 	"log"
-	"math/rand"
-	"net/http"
 	"os/exec"
-	"regexp"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 )
-
-// randomUserAgent 从userAgents列表中随机选择一个User-Agent字符串并返回
-func randomUserAgent() string {
-	rand.Seed(time.Now().UnixNano())
-	return cfg.Config.App.UserAgents[rand.Intn(len(cfg.Config.App.UserAgents))]
-}
-
-func ProcessUserInput(input string) string {
-	linkRegex := regexp.MustCompile(`v\.douyin\.com\/[a-zA-Z0-9]+`)
-	idRegex := regexp.MustCompile(`\d{19}`)
-
-	if linkRegex.MatchString(input) {
-		return linkRegex.FindString(input)
-	} else if idRegex.MatchString(input) {
-		return idRegex.FindString(input)
-	}
-	return ""
-}
-
-func ExtractVideoId(link string) string {
-	// 确保链接包含协议方案
-	if !strings.HasPrefix(link, "http://") && !strings.HasPrefix(link, "https://") {
-		link = "https://" + link
-	}
-
-	// 发送请求并获取重定向后的URL
-	resp, err := http.Get(link)
-	if err != nil {
-		fmt.Println("Error fetching URL:", err)
-		return ""
-	}
-	defer resp.Body.Close()
-
-	// 使用最终请求的URL，可能包含重定向
-	finalURL := resp.Request.URL.String()
-	log.Print("Final URL: " + finalURL)
-	finalURL = resp.Request.URL.String()
-	idRegex := regexp.MustCompile(`/video/(\d+)`)
-	matches := idRegex.FindStringSubmatch(finalURL)
-	if len(matches) > 1 {
-		log.Println("Video ID: " + matches[1])
-		return matches[1]
-	}
-	return ""
-}
-
-func IsNumeric(s string) bool {
-	_, err := strconv.Atoi(s)
-	return err == nil
-}
-
-func GetVideoInfo(videoId string) (string, string, error) {
-	url := fmt.Sprintf("https://www.iesdouyin.com/web/api/v2/aweme/iteminfo/?item_ids=%s&a_bogus=64745b2b5bdc4e75b720a9a85b19867a", videoId)
-	method := "GET"
-
-	client := &http.Client{}
-	req, err := http.NewRequest(method, url, nil)
-
-	if err != nil {
-		fmt.Println(err)
-		return "", "", err
-	}
-	req.Header.Add("User-Agent", randomUserAgent())
-	req.Header.Add("Accept", "*/*")
-	req.Header.Add("Host", "www.iesdouyin.com")
-	req.Header.Add("Connection", "keep-alive")
-
-	res, err := client.Do(req)
-	if err != nil {
-		fmt.Println(err)
-		return "", "", err
-	}
-	defer res.Body.Close()
-
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		fmt.Println(err)
-		return "", "", err
-	}
-	if res.StatusCode != 200 {
-		fmt.Println(string(body))
-		return "", "", fmt.Errorf("response status code is not 200")
-	}
-	//fmt.Println(string(body))
-
-	var videoInfo model.DouYinVideoInfo
-	err = json.Unmarshal(body, &videoInfo)
-	if err != nil {
-		log.Println("Error unmarshalling JSON:", err)
-		return "", "", err
-	}
-
-	if len(videoInfo.ItemList) > 0 && videoInfo.ItemList[0].Video.PlayAddr.Uri != "" {
-		uri := videoInfo.ItemList[0].Video.PlayAddr.Uri
-		desc := videoInfo.ItemList[0].Desc
-		finalUrl := fmt.Sprintf("https://www.iesdouyin.com/aweme/v1/play/?video_id=%s&ratio=1080p&line=0", uri)
-		return finalUrl, desc, nil
-	}
-	return "", "", fmt.Errorf("no video found")
-}
 
 func getVideoDuration(videoURL string) (float64, error) {
 	// 使用ffmpeg获取视频时长
@@ -146,13 +41,19 @@ func getVideoDuration(videoURL string) (float64, error) {
 }
 
 func VideoSlice(videoURL, m string) (error, string) {
-	segments := 6 // 分成6段
+	segments := 6      // 分成6段
+	intercept := "1/5" // 每5帧截取一帧
 	duration, err := getVideoDuration(videoURL)
+	//log.Println("Video duration:", duration)
 	if err != nil {
 		return fmt.Errorf("Error getting video duration: %s\n", err), ""
 	}
-	if duration < 60 {
+	if duration < 60 && duration > 10 {
 		segments = 1
+		intercept = "1/5"
+	} else if duration <= 10 {
+		segments = 5
+		intercept = "1" // 每秒截取一帧
 	}
 	// 计算每个段的时长
 	segmentDuration := duration / float64(segments)
@@ -170,7 +71,7 @@ func VideoSlice(videoURL, m string) (error, string) {
 				"-i", videoURL,
 				"-ss", strconv.FormatFloat(startTime, 'f', -1, 64),
 				"-t", strconv.FormatFloat(segmentDuration, 'f', -1, 64),
-				"-vf", "fps=1/5,scale=iw/5:-1", // 降低帧率和分辨率
+				"-vf", fmt.Sprintf("fps=%s,scale=iw/5:-1", intercept), // 降低帧率和分辨率
 				"-f", "image2pipe",
 				"-vcodec", "mjpeg",
 				"pipe:1",
