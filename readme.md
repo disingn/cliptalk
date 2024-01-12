@@ -193,7 +193,9 @@ go run main.go
 `The code directory is also written in a simple and clear manner, no further explanation is needed.`
 ## Miscellaneous <a name="miscellaneous"></a>
 
-For further assistance or if you have any questions, feel free to join our Telegram group [cliptalk](https://t.me/cliptalk).
+For further assistance or if you have any questions, feel free to join our Telegram group.
+
+[![cliptalk](https://img.shields.io/badge/Telegram-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/cliptalk)
 
 ## Contact Us <a name="contact-us"></a>
 
