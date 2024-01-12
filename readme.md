@@ -96,7 +96,11 @@ Proxy:
 示例：
 
 ```shell
-# 示例请求...
+curl --location --request POST 'localhost:3100/remove' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "url":"https://v.douyin.com/iLYNG8vA/"
+}'
 ```
 
 返回的 JSON 参数：
@@ -117,7 +121,7 @@ Proxy:
 示例：
 
 ```shell
-curl --location --request POST 'localhost:3100/remove' \
+curl --location --request POST 'localhost:3100/video' \
 --header 'Content-Type: application/json' \
 --data-raw '{
     "url":"https://v.douyin.com/iLYNG8vA/"
