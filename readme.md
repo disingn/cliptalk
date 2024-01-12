@@ -6,13 +6,15 @@
 [![GitHub stars](https://img.shields.io/github/stars/disingn/cliptalk.svg?style=social&label=Star)](https://GitHub.com/disingn/cliptalk/stargazers/)
 
 
-ClipTalk 是一个用于去除抖音视频水印和将视频转为文本的工具。
+ClipTalk 是一个用于去除抖音视频水印和将视频解析成文本的工具，
+目前已经兼容 tiktok。
 
 ## 目录
 
 - [安装](#安装)
 - [使用](#使用)
 - [Docker 部署](#docker-部署)
+- [本地开发](#本地开发)
 - [其他](#其他)
 - [联系我们](#联系我们)
 
@@ -152,7 +154,20 @@ curl --location --request POST 'localhost:3100/video' \
 cd cliptalk
 docker-compose up -d
 ```
+## 本地开发 <a name="本地开发"></a>
+` 需要有一点的 go 的代码编写的一点经验`
+### 需要的环境 （默认你都具备了）
+- 安装 go
+- 安装 ffmpeg
 
+### 开发
+```shell
+cd cliptalk
+go mod tidy
+go run main.go
+```
+
+`代码目录写的也比较简单明了了，不再赘述了`
 ## 其他 <a name="其他"></a>
 
 如果在使用过程中遇到问题，请加入我们的 QQ 群进行讨论。
