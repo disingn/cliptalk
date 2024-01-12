@@ -182,7 +182,6 @@ func SetGemini(content string) (error, string) {
 	if err != nil {
 		return fmt.Errorf("error reading response body: %v", err), ""
 	}
-	log.Println(string(body))
 	if res.StatusCode != 200 {
 		return fmt.Errorf("status code error: %d %s", res.StatusCode, string(body)), ""
 	}
