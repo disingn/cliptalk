@@ -27,6 +27,7 @@ git clone https://github.com/disingn/cliptalk.git
 ```
 
 ### 构建程序
+`注意：这里我默认你本地或者服务器已经安装了 ffmpeg 和 go 环境，如果没有安装这两个，请先安装一下！！！不然跑不起来`
 
 ```shell
 cd cliptalk
