@@ -61,7 +61,7 @@ func SetGeminiV(data model.FrameInfo) error {
 		return fmt.Errorf("base64 data is empty")
 	}
 
-	_url := fmt.Sprintf("https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent?key=%s", RandKey(cfg.Config.App.GeminiKey))
+	_url := fmt.Sprintf(cfg.Config.App.GeminiUrl+"/v1beta/models/gemini-pro-vision:generateContent?key=%s", RandKey(cfg.Config.App.GeminiKey))
 	method := "POST"
 
 	payload := model.GeminiData{
@@ -142,7 +142,7 @@ func SetGeminiV(data model.FrameInfo) error {
 }
 
 func SetGemini(content string) (error, string) {
-	_url := fmt.Sprintf("https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=%s", RandKey(cfg.Config.App.GeminiKey))
+	_url := fmt.Sprintf(cfg.Config.App.GeminiUrl+"/v1beta/models/gemini-pro:generateContent?key=%s", RandKey(cfg.Config.App.GeminiKey))
 	method := "POST"
 
 	payload := model.GeminiPro{

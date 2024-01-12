@@ -2,8 +2,9 @@ package model
 
 type Config struct {
 	App struct {
-		GeminiKey  []string `yaml:"GeminiKey"`  // GeminiKey 是一个字符串切片
-		UserAgents []string `yaml:"UserAgents"` // UserAgents 是一个字符串切片
+		GeminiKey  []string `yaml:"GeminiKey"`  // GeminiKey
+		GeminiUrl  string   `yaml:"GeminiUrl"`  // GeminiUrl
+		UserAgents []string `yaml:"UserAgents"` // UserAgents
 		OpenaiUrl  string   `yaml:"OpenaiUrl"`
 		OpenaiKey  []string `yaml:"OpenaiKey"`
 	} `yaml:"App"`
