@@ -11,10 +11,10 @@ import (
 	"strings"
 )
 
-func SetGptV(data model.FrameInfo) error {
+func SetGptV(data model.FrameInfo) (error, string) {
 	// 确保Base64数据非空
 	if data.Base64Data == "" {
-		return fmt.Errorf("base64 data is empty")
+		return fmt.Errorf("base64 data is empty"), ""
 	}
 	//fmt.Printf("data:image/jpeg;base64,%s\r\n", data.Base64Data)
 	url := cfg.Config.App.OpenaiUrl + "/v1/chat/completions"
@@ -44,13 +44,13 @@ func SetGptV(data model.FrameInfo) error {
 	}
 	payloadBytes, err := json.Marshal(payload)
 	if err != nil {
-		return fmt.Errorf("error marshaling payload: %v", err)
+		return fmt.Errorf("error marshaling payload: %v", err), ""
 	}
 	client := &http.Client{}
 	req, err := http.NewRequest(method, url, bytes.NewReader(payloadBytes))
 
 	if err != nil {
-		return fmt.Errorf("error creating request: %v", err)
+		return fmt.Errorf("error creating request: %v", err), ""
 	}
 	req.Header.Add("Authorization", "Bearer "+RandKey(cfg.Config.App.OpenaiKey))
 	req.Header.Add("Content-Type", "application/json")
@@ -59,24 +59,24 @@ func SetGptV(data model.FrameInfo) error {
 
 	res, err := client.Do(req)
 	if err != nil {
-		return fmt.Errorf("error sending request: %v", err)
+		return fmt.Errorf("error sending request: %v", err), ""
 	}
 	defer res.Body.Close()
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		return fmt.Errorf("error reading response body: %v", err)
+		return fmt.Errorf("error reading response body: %v", err), ""
 	}
 	if res.StatusCode != 200 {
-		return fmt.Errorf("status code error: %d %s", res.StatusCode, string(body))
+		return fmt.Errorf("status code error: %d %s", res.StatusCode, string(body)), ""
 	}
 	var d model.GptResponse
 	if err = json.Unmarshal(body, &d); err != nil {
-		return fmt.Errorf("error unmarshal response body: %v", err)
+		return fmt.Errorf("error unmarshal response body: %v", err), ""
 	}
 	//fmt.Println(d.Choices[0].Message.Content)
 	if len(d.Choices[0].Message.Content) == 0 {
-		return fmt.Errorf("content slice is empty")
+		return fmt.Errorf("content slice is empty"), ""
 	}
 
 	frameDescription := fmt.Sprintf("片段 %d中的第 %d帧的内容是%s",
@@ -84,12 +84,7 @@ func SetGptV(data model.FrameInfo) error {
 		data.FrameIndex,
 		d.Choices[0].Message.Content,
 	)
-	// 使用互斥锁来保护对共享切片的写入
-	Mu.Lock()
-	FrameDescriptions = append(FrameDescriptions, frameDescription)
-	Mu.Unlock()
-
-	return nil
+	return nil, frameDescription
 }
 
 func SetGpt(content string) (error, string) {

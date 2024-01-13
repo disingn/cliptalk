@@ -11,7 +11,6 @@ import (
 	"math/rand"
 	"net/http"
 	"net/url"
-	"sync"
 	"time"
 )
 
@@ -52,13 +51,10 @@ func NewClient() *http.Client {
 	}
 }
 
-var FrameDescriptions []string
-var Mu sync.Mutex // 用于保护frameDescriptions切片的互斥锁
-
-func SetGeminiV(data model.FrameInfo) error {
+func SetGeminiV(data model.FrameInfo) (error, string) {
 	// 确保Base64数据非空
 	if data.Base64Data == "" {
-		return fmt.Errorf("base64 data is empty")
+		return fmt.Errorf("base64 data is empty"), ""
 	}
 
 	_url := fmt.Sprintf(cfg.Config.App.GeminiUrl+"/v1beta/models/gemini-pro-vision:generateContent?key=%s", RandKey(cfg.Config.App.GeminiKey))
@@ -83,7 +79,7 @@ func SetGeminiV(data model.FrameInfo) error {
 	}
 	payloadBytes, err := json.Marshal(payload)
 	if err != nil {
-		return fmt.Errorf("error marshaling payload: %v", err)
+		return fmt.Errorf("error marshaling payload: %v", err), ""
 	}
 
 	//client := &http.Client{}
@@ -91,7 +87,7 @@ func SetGeminiV(data model.FrameInfo) error {
 
 	req, err := http.NewRequest(method, _url, bytes.NewReader(payloadBytes))
 	if err != nil {
-		return fmt.Errorf("error creating request: %v", err)
+		return fmt.Errorf("error creating request: %v", err), ""
 	}
 
 	// 添加必要的请求头
@@ -99,46 +95,42 @@ func SetGeminiV(data model.FrameInfo) error {
 
 	res, err := client.Do(req)
 	if err != nil {
-		return fmt.Errorf("error sending request: %v", err)
+		return fmt.Errorf("error sending request: %v", err), ""
 	}
 	defer res.Body.Close()
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		return fmt.Errorf("error reading response body: %v", err)
+		return fmt.Errorf("error reading response body: %v", err), ""
 	}
 
 	// 确保响应状态码为200
 	if res.StatusCode != 200 {
-		return fmt.Errorf("status code error: %d %s", res.StatusCode, string(body))
+		return fmt.Errorf("status code error: %d %s", res.StatusCode, string(body)), ""
 	}
 
 	// 解析响应体
 	var geminiResponse model.GeminiResponse
 	err = json.Unmarshal(body, &geminiResponse)
 	if err != nil {
-		return fmt.Errorf("error unmarshalling JSON: %v", err)
+		return fmt.Errorf("error unmarshalling JSON: %v", err), ""
 	}
 
 	// 检查Candidates切片是否非空
 	if len(geminiResponse.Candidates) == 0 {
-		return fmt.Errorf("candidates slice is empty")
+		return fmt.Errorf("candidates slice is empty"), ""
 	}
 
 	// 检查Parts切片是否非空
 	if len(geminiResponse.Candidates[0].Content.Parts) == 0 {
-		return fmt.Errorf("parts slice is empty")
+		return fmt.Errorf("parts slice is empty"), ""
 	}
 
 	frameDescription := fmt.Sprintf("片段 %d中的第 %d帧的内容是%s",
 		data.SegmentIndex,
 		data.FrameIndex,
 		geminiResponse.Candidates[0].Content.Parts[0].Text)
-	// 使用互斥锁来保护对共享切片的写入
-	Mu.Lock()
-	FrameDescriptions = append(FrameDescriptions, frameDescription)
-	Mu.Unlock()
-	return nil
+	return nil, frameDescription
 }
 
 func SetGemini(content string) (error, string) {

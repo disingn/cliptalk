@@ -60,6 +60,7 @@ func VideoSlice(videoURL, m string) (error, string) {
 	segmentDuration := duration / float64(segments)
 
 	var wg sync.WaitGroup
+	var FrameDescriptions []string
 	for i := 0; i < segments; i++ {
 		wg.Add(1)
 		go func(segmentIndex int) {
@@ -94,6 +95,7 @@ func VideoSlice(videoURL, m string) (error, string) {
 			// 读取数据并处理
 			buffer := make([]byte, 4096) // 用于存储从管道读取的数据
 			imageBuffer := new(bytes.Buffer)
+			var mu sync.Mutex
 			frameIndex := 0
 			for {
 				n, err := stdoutPipe.Read(buffer)
@@ -121,18 +123,21 @@ func VideoSlice(videoURL, m string) (error, string) {
 							Base64Data:   base64Data,
 						}
 						frameIndex++
+						var frameDescription string
 						if m == "gemini" {
-							if err := SetGeminiV(frameInfo); err != nil {
-								log.Printf("Error processing frame info: %s\n", err)
-								continue
-							}
+							err, frameDescription = SetGeminiV(frameInfo)
 						} else if m == "openai" {
-							if err := SetGptV(frameInfo); err != nil {
-								log.Printf("Error processing frame info: %s\n", err)
-								continue
-							}
+							err, frameDescription = SetGptV(frameInfo)
 						}
-
+						if err != nil {
+							log.Printf("Error creating stdout pipe for segment %d: %s", segmentIndex, err)
+							continue
+						}
+						if len(frameDescription) != 0 {
+							mu.Lock()
+							FrameDescriptions = append(FrameDescriptions, frameDescription)
+							mu.Unlock()
+						}
 					}
 				}
 			}
@@ -146,7 +151,6 @@ func VideoSlice(videoURL, m string) (error, string) {
 	}
 	wg.Wait() // 等待所有goroutine完成
 	fullDescription := strings.Join(FrameDescriptions, " ")
-	//fmt.Println("Full description:", fullDescription)
 	d := ""
 	if m == "gemini" {
 		err, d = SetGemini(fullDescription)
@@ -223,7 +227,9 @@ func VideoFileSlice(videoStream io.Reader, m string) (error, string) {
 	buffer := make([]byte, 4096) // 用于存储从管道读取的数据
 	imageBuffer := new(bytes.Buffer)
 	var frameInfo model.FrameInfo // 存储图像数据和索引
+	var FrameDescriptions []string
 	var wg sync.WaitGroup
+	frameStringChan := make(chan string, 10)
 	frameIndex := 0
 	for {
 		n, err := stdoutPipe.Read(buffer)
@@ -253,21 +259,32 @@ func VideoFileSlice(videoStream io.Reader, m string) (error, string) {
 				wg.Add(1)
 				go func(mode string, f model.FrameInfo) {
 					defer wg.Done()
+					var desc string
+					var err error
 					if m == "gemini" {
-						if err := SetGeminiV(frameInfo); err != nil {
-							log.Printf("Error processing frame info: %s\n", err)
-						}
+						err, desc = SetGeminiV(f)
 					} else if m == "openai" {
-						if err := SetGptV(frameInfo); err != nil {
-							log.Printf("Error processing frame info: %s\n", err)
-						}
+						err, desc = SetGptV(f)
 					}
+					if err != nil {
+						log.Printf("Error processing frame info: %s\n", err)
+						desc = "Error: " + err.Error()
+					}
+					frameStringChan <- desc
 				}(m, frameInfo)
+
 			}
 		}
 	}
-	wg.Wait()
-	// 等待命令完成
+	go func() {
+		wg.Wait()
+		close(frameStringChan) // 确保所有goroutine完成后关闭通道
+	}()
+	for desc := range frameStringChan {
+		if len(desc) != 0 {
+			FrameDescriptions = append(FrameDescriptions, desc)
+		}
+	}
 	if err := cmd.Wait(); err != nil {
 		log.Printf("Error waiting for ffmpeg command to finish: %s\n", err)
 		return err, ""
