@@ -5,29 +5,29 @@
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/disingn/cliptalk.svg?style=social&label=Star)](https://GitHub.com/disingn/cliptalk/stargazers/)
 
+[简体中文版](./readme_cn.md) 
 
-ClipTalk 是一个用于去除抖音视频水印和将视频解析成文本的工具，
-目前已经兼容 tiktok。
+ClipTalk is a tool designed for removing watermarks from TikTok videos and converting video content into text. It is now compatible with TikTok.
 
-## 目录
+## Table of Contents
 
-- [安装](#安装)
-- [使用](#使用)
-- [Docker 部署](#docker-部署)
-- [本地开发](#本地开发)
-- [其他](#其他)
-- [联系我们](#联系我们)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Docker Deployment](#docker-deployment)
+- [Local Development](#local-development)
+- [Miscellaneous](#miscellaneous)
+- [Contact Us](#contact-us)
 
-## 安装 <a name="安装"></a>
+## Installation <a name="installation"></a>
 
-### 克隆代码
+### Clone the Repository
 
 ```shell
 git clone https://github.com/disingn/cliptalk.git
 ```
 
-### 构建程序
-`注意：这里我默认你本地或者服务器已经安装了 ffmpeg 和 go 环境，如果没有安装这两个，请先安装一下！！！不然跑不起来`
+### Build the Application
+`Note: I assume that you have already installed ffmpeg and the go environment locally or on your server. If these are not installed, please install them first!!! Otherwise, it won't run.`
 
 ```shell
 cd cliptalk
@@ -36,72 +36,72 @@ export GOARCH=amd64
 go build -o cliptalk
 ```
 
-### 配置文件
+### Configuration File
 
-复制示例配置文件并修改：
+Copy the example configuration file and modify it:
 
 ```shell
 cp config.yaml.example config.yaml
 ```
 
-编辑 `config.yaml` 文件，填入必要的配置信息：
+Edit the `config.yaml` file and fill in the necessary configuration information:
 
 ```yaml
 App:
-  #Gemini 的 apikey
+  # Gemini's apikey
   GeminiKey:
     - key1
     - key2
-  # 自定义的 Gemini 的 url 地址 可以使用https://zhile.io/2023/12/24/gemini-pro-proxy.html#more-587来做代理
-  # ps: 代理地址不要带最后的/
-  #配置了 GeminiUrl 就不需要配置 Proxy
+  # Custom Gemini URL, you can use https://zhile.io/2023/12/24/gemini-pro-proxy.html#more-587 as a proxy
+  # PS: Do not include a trailing slash in the proxy address
+  # If you configure a GeminiUrl, you do not need to configure a Proxy
   GeminiUrl: https://gemini.baipiao.io
-  #浏览器的 UserAgent 用来解析抖音链接
+  # Browser UserAgent for parsing TikTok links
   UserAgents:
     - Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Safari/605.2.15
     - Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.104 Safari/537.66
-  #注意：这里的 OpenaiUrl 最后面不带 / 你也可以修改成你自己反代的地址或者兼容 OpenAI 的地址
+  # Note: Do not include a trailing slash in the OpenaiUrl. You can also change it to your own reverse proxy address or a compatible OpenAI address
   OpenaiUrl: https://api.openai.com
   OpenaiKey:
     - key1
     - key2
-#服务器配置
+# Server Configuration
 Sever:
   Port: 3100
   Host: localhost
-  #可以上传的文件大小 单位MB 默认10MB 不要写 0
+  # Maximum file size for uploads in MB, default is 10MB, do not write 0
   MaxFileSize: 10
-# #代理配置 用代理( http|https|socks5://ip:port ) 
+# # Proxy Configuration, use a proxy (http|https|socks5://ip:port)
 # Proxy:
 #     Protocol: socks5://192.168.1.10:3200
 
-#代理配置 不用代理 
+# Proxy Configuration, no proxy 
 Proxy:
   Protocol: 
 ```
 
-如果你觉得配置过程繁琐，可以直接使用实例的配置文件。
+If you find the configuration process cumbersome, you can directly use the example configuration file.
 
-### 启动程序
+### Start the Application
 
 ```shell
 ./cliptalk
 ```
 
-### 配置 Nginx 反代
+### Configure Nginx Reverse Proxy
 
-请参考 Nginx 官方文档进行配置，或使用宝塔、1panel 等工具。
+Please refer to the official Nginx documentation for configuration or use tools like Baota or 1panel.
 
-## 使用 <a name="使用"></a>
+## Usage <a name="usage"></a>
 
-### 接口
+### API Endpoints
 
-#### 抖音去水印接口
+#### TikTok Watermark Removal API
 
-请求方式：POST
-请求地址：`/remove`
+Method: POST
+Endpoint: `/remove`
 
-示例：
+Example:
 
 ```shell
 curl --location --request POST 'localhost:3100/remove' \
@@ -111,94 +111,94 @@ curl --location --request POST 'localhost:3100/remove' \
 }'
 ```
 
-返回的 JSON 参数：
+Returned JSON parameters:
 
 ```json
 {
-  "finalUrl": "去除水印的视频链接",
+  "finalUrl": "Watermark-free video link",
   "message": "success",
-  "title": "视频标题"
+  "title": "Video title"
 }
 ```
 
-#### 抖音视频转文本接口
+#### TikTok Video to Text API
 
-请求方式：POST
-请求地址：`/video`
+Method: POST
+Endpoint: `/video`
 
-示例：
+Example:
 
 ```shell
 curl --location --request POST 'localhost:3100/video' \
 --header 'Content-Type: application/json' \
 --data-raw '{
     "url":"https://v.douyin.com/iLYnjXbA/",
-    "model":"openai" //这里的 model 可以是 openai 或者 gemini
+    "model":"openai" // The 'model' here can be 'openai' or 'gemini'
 }'
 ```
 
-返回的 JSON 参数：
+Returned JSON parameters:
 
 ```json
 {
-  "finalUrl": "去除水印的视频链接",
+  "finalUrl": "Watermark-free video link",
   "message": "success",
-  "title": "视频标题",
-  "content": "视频文本"
+  "title": "Video title",
+  "content": "Video text"
 }
 ```
-### 本地视频转文本接口
-请求方式：POST
-请求地址：`/video-file`
+### Local Video to Text API
+Method: POST
+Endpoint: `/video-file`
 
-示例：
+Example:
 
 ```shell
 curl --location --request POST 'localhost:3100/video-file' \
 --form 'file=@"/test.mp4"' \
 --form 'model="openai"'
 ```
-返回的 json 参数：
+Returned JSON parameters:
 ```json
 {
-  "content": "视频文本"
+  "content": "Video text"
 }
 ```
 
-## Docker 部署 <a name="Docker 部署"></a>
+## Docker Deployment <a name="docker-deployment"></a>
 
-### 准备工作
+### Prerequisites
 
-确保已安装 Docker 和 Docker Compose。
+Make sure Docker and Docker Compose are installed.
 
-### 部署
+### Deployment
 
 ```shell
 cd cliptalk
 docker-compose up -d
 ```
-## 本地开发 <a name="本地开发"></a>
-` 需要有一点的 go 的代码编写的一点经验`
-### 需要的环境 （默认你都具备了）
-- 安装 go
-- 安装 ffmpeg
+## Local Development <a name="local-development"></a>
+`Some experience with writing Go code is required`
+### Required Environment (assuming you already have it)
+- Install Go
+- Install ffmpeg
 
-### 开发
+### Development
 ```shell
 cd cliptalk
 go mod tidy
 go run main.go
 ```
 
-`代码目录写的也比较简单明了了，不再赘述了`
-## 其他 <a name="其他"></a>
+`The code directory is also written in a simple and clear manner, no further explanation is needed.`
+## Miscellaneous <a name="miscellaneous"></a>
 
-如果在使用过程中遇到问题，请加入我们的 QQ 群进行讨论。
+For further assistance or if you have any questions, feel free to join our Telegram group.
 
-QQ 群: 814702872
+[![cliptalk](https://img.shields.io/badge/Telegram-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/cliptalk)
 
-## 联系我们 <a name="联系我们"></a>
+## Contact Us <a name="contact-us"></a>
 
-如有任何疑问或需要支持，请通过以下方式联系我们：
+If you have any questions or need support, please contact us through the following means:
 
-[![联系我们 !](https://img.shields.io/badge/Ask%20me-anything-1abc9c.svg)]([https://GitHub.com/Naereen/ama](https://github.com/disingn/cliptalk/issues))
+[![Contact Us!](https://img.shields.io/badge/Ask%20me-anything-1abc9c.svg)](https://github.com/disingn/cliptalk/issues)
