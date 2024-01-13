@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-func SetGptV(data model.FrameInfo) (error, string) {
+func SetGptV(data model.FrameInfo, t []string) (error, string) {
 	// 确保Base64数据非空
 	if data.Base64Data == "" {
 		return fmt.Errorf("base64 data is empty"), ""
@@ -52,7 +52,7 @@ func SetGptV(data model.FrameInfo) (error, string) {
 	if err != nil {
 		return fmt.Errorf("error creating request: %v", err), ""
 	}
-	req.Header.Add("Authorization", "Bearer "+RandKey(cfg.Config.App.OpenaiKey))
+	req.Header.Add("Authorization", "Bearer "+RandKey(t))
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Accept", "*/*")
 	req.Header.Add("Connection", "keep-alive")
@@ -87,7 +87,7 @@ func SetGptV(data model.FrameInfo) (error, string) {
 	return nil, frameDescription
 }
 
-func SetGpt(content string) (error, string) {
+func SetGpt(content string, t []string) (error, string) {
 	url := cfg.Config.App.OpenaiUrl + "/v1/chat/completions"
 	method := "POST"
 	//contentStr := strings.TrimSuffix(content, "\n```")
@@ -120,7 +120,7 @@ func SetGpt(content string) (error, string) {
 	if err != nil {
 		return fmt.Errorf("error creating request: %v", err), ""
 	}
-	req.Header.Add("Authorization", "Bearer "+RandKey(cfg.Config.App.OpenaiKey))
+	req.Header.Add("Authorization", "Bearer "+RandKey(t))
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Accept", "*/*")
 	req.Header.Add("Connection", "keep-alive")

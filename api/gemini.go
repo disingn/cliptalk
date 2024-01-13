@@ -51,13 +51,13 @@ func NewClient() *http.Client {
 	}
 }
 
-func SetGeminiV(data model.FrameInfo) (error, string) {
+func SetGeminiV(data model.FrameInfo, t []string) (error, string) {
 	// 确保Base64数据非空
 	if data.Base64Data == "" {
 		return fmt.Errorf("base64 data is empty"), ""
 	}
 
-	_url := fmt.Sprintf(cfg.Config.App.GeminiUrl+"/v1beta/models/gemini-pro-vision:generateContent?key=%s", RandKey(cfg.Config.App.GeminiKey))
+	_url := fmt.Sprintf(cfg.Config.App.GeminiUrl+"/v1beta/models/gemini-pro-vision:generateContent?key=%s", RandKey(t))
 	method := "POST"
 
 	payload := model.GeminiData{
@@ -133,8 +133,8 @@ func SetGeminiV(data model.FrameInfo) (error, string) {
 	return nil, frameDescription
 }
 
-func SetGemini(content string) (error, string) {
-	_url := fmt.Sprintf(cfg.Config.App.GeminiUrl+"/v1beta/models/gemini-pro:generateContent?key=%s", RandKey(cfg.Config.App.GeminiKey))
+func SetGemini(content string, t []string) (error, string) {
+	_url := fmt.Sprintf(cfg.Config.App.GeminiUrl+"/v1beta/models/gemini-pro:generateContent?key=%s", RandKey(t))
 	method := "POST"
 
 	payload := model.GeminiPro{

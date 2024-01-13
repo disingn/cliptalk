@@ -21,5 +21,6 @@ func main() {
 	r.Post("/video", sever.VideoProcessing())
 	r.Post("/remove", sever.RemoveWatermark())
 	r.Post("/video-file", sever.VideoFileProcessing())
+	r.Post("/video-gpt", sever.VideoProcessingGPTs())
 	r.Listen(":" + cfg.Config.Sever.Port)
 }

@@ -7,7 +7,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
+	"mime/multipart"
+	"net/http"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -41,7 +44,7 @@ func getVideoDuration(videoURL string) (float64, error) {
 	return 0, fmt.Errorf("unable to parse duration from ffmpeg output")
 }
 
-func VideoSlice(videoURL, m string) (error, string) {
+func VideoSlice(videoURL, m string, t []string) (error, string) {
 	segments := 6      // 分成6段
 	intercept := "1/5" // 每5帧截取一帧
 	duration, err := getVideoDuration(videoURL)
@@ -125,9 +128,9 @@ func VideoSlice(videoURL, m string) (error, string) {
 						frameIndex++
 						var frameDescription string
 						if m == "gemini" {
-							err, frameDescription = SetGeminiV(frameInfo)
+							err, frameDescription = SetGeminiV(frameInfo, t)
 						} else if m == "openai" {
-							err, frameDescription = SetGptV(frameInfo)
+							err, frameDescription = SetGptV(frameInfo, t)
 						}
 						if err != nil {
 							log.Printf("Error creating stdout pipe for segment %d: %s", segmentIndex, err)
@@ -153,12 +156,12 @@ func VideoSlice(videoURL, m string) (error, string) {
 	fullDescription := strings.Join(FrameDescriptions, " ")
 	d := ""
 	if m == "gemini" {
-		err, d = SetGemini(fullDescription)
+		err, d = SetGemini(fullDescription, t)
 		if err != nil {
 			return err, ""
 		}
 	} else if m == "openai" {
-		err, d = SetGpt(fullDescription)
+		err, d = SetGpt(fullDescription, t)
 		if err != nil {
 			return err, ""
 		}
@@ -199,7 +202,7 @@ func getVideoDurationFromStream(videoStream io.Reader) (float64, error) {
 	return duration, nil
 }
 
-func VideoFileSlice(videoStream io.Reader, m string) (error, string) {
+func VideoFileSlice(videoStream io.Reader, m string, t []string) (error, string) {
 
 	cmd := exec.Command(
 		"ffmpeg",
@@ -262,9 +265,9 @@ func VideoFileSlice(videoStream io.Reader, m string) (error, string) {
 					var desc string
 					var err error
 					if m == "gemini" {
-						err, desc = SetGeminiV(f)
+						err, desc = SetGeminiV(f, t)
 					} else if m == "openai" {
-						err, desc = SetGptV(f)
+						err, desc = SetGptV(f, t)
 					}
 					if err != nil {
 						log.Printf("Error processing frame info: %s\n", err)
@@ -293,15 +296,178 @@ func VideoFileSlice(videoStream io.Reader, m string) (error, string) {
 	//fmt.Println("Full description:", fullDescription)
 	d := ""
 	if m == "gemini" {
-		err, d = SetGemini(fullDescription)
+		err, d = SetGemini(fullDescription, t)
 		if err != nil {
 			return err, ""
 		}
 	} else if m == "openai" {
-		err, d = SetGpt(fullDescription)
+		err, d = SetGpt(fullDescription, t)
 		if err != nil {
 			return err, ""
 		}
 	}
 	return nil, d
+}
+
+func VideoSliceGPTs(videoURL string) (error, []model.FrameInfo) {
+	segments := 6      // 分成6段
+	intercept := "1/5" // 每5帧截取一帧
+	duration, err := getVideoDuration(videoURL)
+	//log.Println("Video duration:", duration)
+	if err != nil {
+		return fmt.Errorf("Error getting video duration: %s\n", err), nil
+	}
+	if duration < 60 && duration > 10 {
+		segments = 1
+		intercept = "1/5"
+	} else if duration <= 10 {
+		segments = 5
+		intercept = "1" // 每秒截取一帧
+	}
+	// 计算每个段的时长
+	segmentDuration := duration / float64(segments)
+
+	var wg sync.WaitGroup
+	var frameInfoData []model.FrameInfo
+	for i := 0; i < segments; i++ {
+		wg.Add(1)
+		go func(segmentIndex int) {
+			defer wg.Done()
+			startTime := float64(segmentIndex) * segmentDuration
+
+			// 构建ffmpeg命令，使用管道输出
+			cmd := exec.Command(
+				"ffmpeg",
+				"-i", videoURL,
+				"-ss", strconv.FormatFloat(startTime, 'f', -1, 64),
+				"-t", strconv.FormatFloat(segmentDuration, 'f', -1, 64),
+				"-vf", fmt.Sprintf("fps=%s,scale=iw/5:-1", intercept), // 降低帧率和分辨率
+				"-f", "image2pipe",
+				"-vcodec", "mjpeg",
+				"pipe:1",
+			)
+
+			// 创建管道
+			stdoutPipe, err := cmd.StdoutPipe()
+			if err != nil {
+				log.Printf("Error creating stdout pipe for segment %d: %s\n", segmentIndex, err)
+				return
+			}
+
+			// 启动命令
+			if err := cmd.Start(); err != nil {
+				log.Printf("Error starting ffmpeg for segment %d: %s\n", segmentIndex, err)
+				return
+			}
+
+			// 读取数据并处理
+			buffer := make([]byte, 4096) // 用于存储从管道读取的数据
+			imageBuffer := new(bytes.Buffer)
+
+			frameIndex := 0
+			for {
+				n, err := stdoutPipe.Read(buffer)
+				//log.Print(len(buffer))
+				if err != nil {
+					if err == io.EOF {
+						break // 管道关闭，没有更多的数据
+					}
+					log.Printf("Error reading from stdout pipe: %s\n", err)
+					return
+				}
+				if n > 0 {
+					imageBuffer.Write(buffer[:n])
+					// 检查imageBuffer中是否存在JPEG结束标记
+					if idx := bytes.Index(imageBuffer.Bytes(), []byte("\xff\xd9")); idx != -1 {
+						// 截取到结束标记的部分作为一张完整的JPEG图像
+						jpegData := imageBuffer.Bytes()[:idx+2] // 包含结束标记
+						imageBuffer.Next(idx + 2)               // 移除已处理的JPEG图像数据
+						imageReader := bytes.NewReader(jpegData)
+						imageURL, err := UploadImage(imageReader)
+						if err != nil {
+							log.Printf("Error uploading image for segment %d, frame %d: %s\n", segmentIndex, frameIndex, err)
+							continue
+						}
+
+						// 输出带有标记的Base64字符串
+						frameInfo := model.FrameInfo{
+							SegmentIndex: segmentIndex,
+							FrameIndex:   frameIndex,
+							Base64Data:   imageURL,
+						}
+						frameIndex++
+						frameInfoData = append(frameInfoData, frameInfo)
+					}
+				}
+			}
+
+			// 等待命令完成
+			if err := cmd.Wait(); err != nil {
+				log.Printf("Error waiting for ffmpeg command to finish for segment %d: %s\n", segmentIndex, err)
+				return
+			}
+		}(i)
+	}
+	wg.Wait() // 等待所有goroutine完成
+
+	return nil, frameInfoData
+}
+
+func UploadImage(imageData io.Reader) (string, error) {
+	// 目标URL
+	uploadURL := "https://file.bxsai.net/upload"
+
+	// 创建一个multipart表单文件
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	part, err := writer.CreateFormFile("file", "frame.jpg")
+	if err != nil {
+		return "", err
+	}
+
+	// 将图片数据复制到表单文件
+	if _, err := io.Copy(part, imageData); err != nil {
+		return "", err
+	}
+
+	// 关闭writer以正确设置Content-Type
+	if err := writer.Close(); err != nil {
+		return "", err
+	}
+
+	// 创建请求
+	req, err := http.NewRequest("POST", uploadURL, body)
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+
+	// 发送请求
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	// 读取响应
+	respBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	// 检查响应状态码
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("bad status: %s", resp.Status)
+	}
+
+	// 解析JSON响应
+	var result struct {
+		URL string `json:"url"`
+	}
+	if err := json.Unmarshal(respBody, &result); err != nil {
+		return "", err
+	}
+
+	return result.URL, nil
 }

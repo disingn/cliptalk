@@ -165,6 +165,81 @@ Returned JSON parameters:
 }
 ```
 
+### Public Testing Interfaces:
+`Please note that the key must correspond to the selected model's API key, otherwise an error will occur. For the openai model, the default interface is the official OpenAI API: https://api.openai.com, so please use the official API key for the openai model.`
+
+#### TikTok Video Watermark Removal Interface
+
+Request Method: POST
+Request URL: `/remove`
+
+Example:
+
+```shell
+curl --location --request POST 'https://gpts.nbai.chat/remove' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "url":"https://v.douyin.com/iLYNG8vA/"
+}'
+```
+
+Returned JSON Parameters:
+
+```json
+{
+  "finalUrl": "Link to the video without watermark",
+  "message": "success",
+  "title": "Video title"
+}
+```
+
+#### TikTok Video to Text Interface
+
+Request Method: POST
+Request URL: `/video`
+
+Example:
+
+```shell
+curl --location --request POST 'https://gpts.nbai.chat/video' \
+--header 'Authorization: key1,key2' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "url":"https://v.douyin.com/iLYnjXbA/",
+    "model":"gemini"
+}'
+```
+
+Returned JSON Parameters:
+
+```json
+{
+  "finalUrl": "Link to the video without watermark",
+  "message": "success",
+  "title": "Video title",
+  "content": "Text from the video"
+}
+```
+
+### Local Video to Text Interface
+Request Method: POST
+Request URL: `/video-file`
+
+Example:
+
+```shell
+curl --location --request POST 'https://gpts.nbai.chat/video-file' \
+--header 'Authorization: key1,key2' \
+--form 'file=@"/path/to/test.mp4"' \
+--form 'model="openai"'
+```
+Returned JSON Parameters:
+```json
+{
+  "content": "Text from the video"
+}
+```
+
 ## Docker Deployment <a name="docker-deployment"></a>
 
 ### Prerequisites
