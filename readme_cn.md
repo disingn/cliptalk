@@ -164,6 +164,81 @@ curl --location --request POST 'localhost:3100/video-file' \
   "content": "视频文本"
 }
 ```
+### 公共测试接口：
+`请注意，选择什么模型，对应的 key 就放对应模型的 apikey 不然会报错
+openai 的默认使用官方的接口：https://api.openai.com 所以 openai 这个模型的 key 请使用官方的 apikey
+`
+#### 抖音去水印接口
+
+请求方式：POST
+请求地址：`/remove`
+
+示例：
+
+```shell
+curl --location --request POST 'https://gpts.nbai.chat/remove' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "url":"https://v.douyin.com/iLYNG8vA/"
+}'
+```
+
+返回的 JSON 参数：
+
+```json
+{
+  "finalUrl": "去除水印的视频链接",
+  "message": "success",
+  "title": "视频标题"
+}
+```
+
+#### 抖音视频转文本接口
+
+请求方式：POST
+请求地址：`/video`
+
+示例：
+
+```shell
+curl --location --request POST 'https://gpts.nbai.chat/video' \
+--header 'Authorization: key1,key2' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "url":"https://v.douyin.com/iLYnjXbA/",
+    "model":"gemini"
+}'
+```
+
+返回的 JSON 参数：
+
+```json
+{
+  "finalUrl": "去除水印的视频链接",
+  "message": "success",
+  "title": "视频标题",
+  "content": "视频文本"
+}
+```
+### 本地视频转文本接口
+请求方式：POST
+请求地址：`/video-file`
+
+示例：
+
+```shell
+curl --location --request POST 'https://gpts.nbai.chat/video-file' \
+--header 'Authorization: key1,key2' \
+--form 'file=@"/test.mp4"' \
+--form 'model="openai"'
+```
+返回的 json 参数：
+```json
+{
+  "content": "视频文本"
+}
+```
+
 
 ## Docker 部署 <a name="Docker 部署"></a>
 
