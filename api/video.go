@@ -41,13 +41,13 @@ func getVideoDuration(videoURL string) (float64, error) {
 	return 0, fmt.Errorf("unable to parse duration from ffmpeg output")
 }
 
-func VideoSlice(videoURL, m string) (error, string) {
+func VideoSlice(videoURL, m string) (error, *model.VideoReply) {
 	segments := 6      // 分成6段
 	intercept := "1/5" // 每5帧截取一帧
 	duration, err := getVideoDuration(videoURL)
 	//log.Println("Video duration:", duration)
 	if err != nil {
-		return fmt.Errorf("Error getting video duration: %s\n", err), ""
+		return fmt.Errorf("Error getting video duration: %s\n", err), nil
 	}
 	if duration < 60 && duration > 10 {
 		segments = 1
@@ -155,15 +155,18 @@ func VideoSlice(videoURL, m string) (error, string) {
 	if m == "gemini" {
 		err, d = SetGemini(fullDescription)
 		if err != nil {
-			return err, ""
+			return err, nil
 		}
 	} else if m == "openai" {
 		err, d = SetGpt(fullDescription)
 		if err != nil {
-			return err, ""
+			return err, nil
 		}
 	}
-	return nil, d
+	return nil, &model.VideoReply{
+		Content:  d,
+		Duration: duration,
+	}
 }
 
 // getVideoDurationFromStream 从视频流中获取视频的持续时间

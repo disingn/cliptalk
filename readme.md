@@ -217,7 +217,8 @@ Returned JSON Parameters:
   "finalUrl": "Link to the video without watermark",
   "message": "success",
   "title": "Video title",
-  "content": "Text from the video"
+  "content": "Text from the video",
+  "duration": "Video duration In seconds" 
 }
 ```
 
@@ -251,6 +252,10 @@ Make sure Docker and Docker Compose are installed.
 ```shell
 cd cliptalk
 docker-compose up -d
+```
+or
+```shell
+./update.sh
 ```
 ## Local Development <a name="local-development"></a>
 `Some experience with writing Go code is required`

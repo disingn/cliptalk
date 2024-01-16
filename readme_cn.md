@@ -217,7 +217,8 @@ curl --location --request POST 'https://gpts.nbai.chat/video' \
   "finalUrl": "去除水印的视频链接",
   "message": "success",
   "title": "视频标题",
-  "content": "视频文本"
+  "content": "视频文本",
+  "duration": "视频时长 单位秒"
 }
 ```
 ### 本地视频转文本接口
@@ -251,6 +252,10 @@ curl --location --request POST 'https://gpts.nbai.chat/video-file' \
 ```shell
 cd cliptalk
 docker-compose up -d
+```
+或者
+```shell
+./update.sh
 ```
 ## 本地开发 <a name="本地开发"></a>
 ` 需要有一点的 go 的代码编写的一点经验`

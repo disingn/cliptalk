@@ -36,3 +36,8 @@ type TikTokVideoData struct {
 		Desc string `json:"desc"`
 	} `json:"aweme_list"`
 }
+
+type VideoReply struct {
+	Content  string  `json:"content"`
+	Duration float64 `json:"duration"`
+}

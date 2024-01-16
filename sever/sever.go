@@ -63,7 +63,8 @@ func VideoProcessing() fiber.Handler {
 			"message":  "success",
 			"title":    title,
 			"finalUrl": finalUrl,
-			"content":  d,
+			"content":  d.Content,
+			"duration": d.Duration,
 		})
 	}
 }
