@@ -17,14 +17,16 @@ import {
 
 import {
     Drawer,
+    DrawerClose,
     DrawerContent,
-    DrawerDescription,
+    DrawerDescription, DrawerFooter,
     DrawerHeader,
     DrawerTitle,
     DrawerTrigger,
 } from "@/components/ui/drawer"
 
 import useMediaQuery from "@/hooks/useMediaQuery.ts";
+import SettingsIcon from "@/components/ui/Icon.tsx";
 
 export default function App() {
     const [videoLink, setVideoLink] = useState("")
@@ -32,6 +34,7 @@ export default function App() {
     const [videoFile, setVideoFile] = useState<File | null>(null)
     const [isLoading, setIsLoading] = useState(false);
     const [showDialog, setShowDialog] = useState(false);
+    const [showSetting, setShowSetting] = useState(false);
     const isMobile = useMediaQuery("(max-width: 768px)");
     const [removeApiResponse, setRemoveApiResponse] = useState<{
         finalUrl: string,
@@ -47,26 +50,28 @@ export default function App() {
     } | null>(null);
     const [isGemini, setIsGmini] = useState(false)
     const [isOpenAI, setIsOpenAI] = useState(false)
+    const [key,setKey] = useState('')
 
     // const[downloadLink, setDownloadLink] = useState("")
     // useEffect(() => {
     //     setIsRemoveWatermark(false)
     // }, []);
     function handleRemoveWatermarkChange() {
+        setIsOpenAI(false)
+        setIsGmini(false)
         setIsRemoveWatermark(!isRemoveWatermark)
+
     }
 
     function handleOpenAIChange() {
-        if (isGemini) {
-            setIsGmini(!isGemini)
-        }
+       setIsGmini(false)
+        setIsRemoveWatermark(false)
         setIsOpenAI(!isOpenAI)
     }
 
     function handleGminiChange() {
-        if (isOpenAI) {
-            setIsOpenAI(!isOpenAI)
-        }
+        setIsOpenAI(false)
+        setIsRemoveWatermark(false)
         setIsGmini(!isGemini)
     }
 
@@ -100,12 +105,13 @@ export default function App() {
         }
     }
 
-    async function makeRequest(url: string, data: any) {
+    async function makeRequest(url: string, data: any,key:string) {
         try {
             const response = await fetch(url, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    "Authorization": key,
                 },
                 body: JSON.stringify(data)
             });
@@ -120,7 +126,7 @@ export default function App() {
         }
     }
 
-    async function mkFileRequest(url: string, data: any) {
+    async function mkFileRequest(url: string, data: any,key:string) {
         try {
             // 创建一个 FormData 对象
             const formData = new FormData();
@@ -131,6 +137,9 @@ export default function App() {
             }
 
             const response = await fetch(url, {
+                headers: {
+                    "Authorization": key,
+                },
                 method: 'POST',
                 body: formData, // 使用 FormData 对象作为请求体
             });
@@ -160,7 +169,7 @@ export default function App() {
             const requestBody = {
                 url: videoLink
             };
-            const data = await makeRequest('/remove', requestBody);
+            const data = await makeRequest('/api/remove', requestBody,"");
             if (data != null) {
                 setRemoveApiResponse(data);
                 setIsLoading(false);
@@ -177,13 +186,20 @@ export default function App() {
         } else if (isGemini) {
             model = 'gemini'
         }
+        if(key==''){
+            alert('请填写apikey')
+            setShowSetting(true)
+            setIsLoading(false)
+            return
+        }
+        console.log(key)
         if (videoLink != '' && !isRemoveWatermark) {
 
             const requestBody = {
                 url: videoLink,
                 model: model
             };
-            const data = await makeRequest('/video', requestBody);
+            const data = await makeRequest('/api/video', requestBody,key);
             if (data != null) {
                 setVideoLinkApiResponse(data);
                 setIsLoading(false);
@@ -198,7 +214,7 @@ export default function App() {
                 file: videoFile,
                 model: model
             };
-            const data = await mkFileRequest('/video-file', requestBody);
+            const data = await mkFileRequest('/api/video-file', requestBody,key);
             if (data != null) {
                 setVideoLinkApiResponse(data);
                 setIsLoading(false);
@@ -210,6 +226,78 @@ export default function App() {
         }
     }
 
+    function handleSettingSubmit(event: React.FormEvent<HTMLButtonElement>) {
+        event.preventDefault()
+        setShowSetting(true)
+    }
+
+    // const [open, setOpen] = useState(false)
+    // const isDesktop = useMediaQuery("(min-width: 768px)")
+    function apiKeySubmit(e: React.FormEvent<HTMLFormElement>) {
+        e.preventDefault()
+        const formData = new FormData(e.currentTarget);
+
+        // 使用 FormData.get 方法来获取表单中的数据
+        const email = formData.getAll("key");
+        // console.log('email:', email);
+        setKey(email.toString())
+        setShowSetting(false)
+
+    }
+    function DrawerDialogDemo() {
+        if (!isMobile) {
+            return (
+                <Dialog open={showSetting} onOpenChange={setShowSetting}>
+                    <DialogTrigger asChild>
+                        {/*<Button variant="outline">Edit Profile</Button>*/}
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[425px]">
+                        <DialogHeader>
+                            <DialogTitle>Edit profile</DialogTitle>
+                            <DialogDescription>
+                                Make changes to your profile here. Click save when you're done.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <form className={"grid items-start gap-4"} onSubmit={apiKeySubmit}>
+                            <div className="grid gap-2">
+                                <Label htmlFor="key">apikey</Label>
+                                <Input  name="key"/>
+                            </div>
+                            <Button type="submit" >Save changes</Button>
+                        </form>
+                    </DialogContent>
+                </Dialog>
+            )
+        }
+
+        return (
+            <Drawer open={showSetting} onOpenChange={setShowSetting}>
+                <DrawerTrigger asChild>
+                    {/*<Button variant="outline">Edit Profile</Button>*/}
+                </DrawerTrigger>
+                <DrawerContent>
+                    <DrawerHeader className="text-left">
+                        <DrawerTitle>Edit profile</DrawerTitle>
+                        <DrawerDescription>
+                            Make changes to your profile here. Click save when you're done.
+                        </DrawerDescription>
+                    </DrawerHeader>
+                    <form className={"grid items-start gap-4"} onSubmit={apiKeySubmit}>
+                        <div className="grid gap-2">
+                            <Label htmlFor="key">apikey</Label>
+                            <Input  name="key"/>
+                        </div>
+                        <Button type="submit" >Save changes</Button>
+                    </form>
+                    <DrawerFooter className="pt-2">
+                        <DrawerClose asChild>
+                            <Button variant="outline">Cancel</Button>
+                        </DrawerClose>
+                    </DrawerFooter>
+                </DrawerContent>
+            </Drawer>
+        )
+    }
 
     function DownloadDialog() {
         return (
@@ -254,7 +342,12 @@ export default function App() {
             <div className="w-full max-w-md">
                 <Card>
                     <CardHeader>
+                        <div className="flex flex-row justify-between">
                         <CardTitle>Video to Article</CardTitle>
+                            <Button size="icon" variant="ghost" onClick={handleSettingSubmit}>
+                                <SettingsIcon className="h-6 w-6" />
+                            </Button>
+                        </div>
                         <CardDescription>Upload your video and get the article</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
@@ -263,7 +356,7 @@ export default function App() {
                             <Input id="video-link" value={videoLink} onChange={handleVideoLinkChange}
                                    placeholder="Enter video link"/>
                             <div className="space-x-2 leading-none flex flex-row justify-start">
-                                <Checkbox onClick={handleRemoveWatermarkChange}/>
+                                <Checkbox checked={isRemoveWatermark} onClick={handleRemoveWatermarkChange}/>
                                 <label
                                     className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                                 >
@@ -324,8 +417,8 @@ export default function App() {
                     </CardContent>
                 </Card>
                 {showDialog && <DownloadDialog/>}
+                {showSetting&&<DrawerDialogDemo/>}
             </div>
         </div>
     )
 }
-
