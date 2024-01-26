@@ -9,6 +9,8 @@
 
 ClipTalk is a tool designed for removing watermarks from TikTok videos and converting video content into text. It is now compatible with TikTok.
 
+Demo: https://gpts.nbai.chat
+
 ## Table of Contents
 
 - [Installation](#installation)

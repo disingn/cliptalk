@@ -9,6 +9,8 @@
 ClipTalk 是一个用于去除抖音视频水印和将视频解析成文本的工具，
 目前已经兼容 tiktok。
 
+演示站：https://gpts.nbai.chat
+
 ## 目录
 
 - [安装](#安装)
