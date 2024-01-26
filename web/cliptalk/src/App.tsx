@@ -160,7 +160,7 @@ export default function App() {
             const requestBody = {
                 url: videoLink
             };
-            const data = await makeRequest('/api/remove', requestBody);
+            const data = await makeRequest('/remove', requestBody);
             if (data != null) {
                 setRemoveApiResponse(data);
                 setIsLoading(false);
@@ -183,7 +183,7 @@ export default function App() {
                 url: videoLink,
                 model: model
             };
-            const data = await makeRequest('/api/video', requestBody);
+            const data = await makeRequest('/video', requestBody);
             if (data != null) {
                 setVideoLinkApiResponse(data);
                 setIsLoading(false);
@@ -198,7 +198,7 @@ export default function App() {
                 file: videoFile,
                 model: model
             };
-            const data = await mkFileRequest('/api/video-file', requestBody);
+            const data = await mkFileRequest('/video-file', requestBody);
             if (data != null) {
                 setVideoLinkApiResponse(data);
                 setIsLoading(false);

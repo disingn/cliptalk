@@ -18,6 +18,7 @@ func main() {
 	})
 	r.Use(cors.New(cors.ConfigDefault))
 	r.Use(logger.New(logger.ConfigDefault))
+	r.Static("/", "./web/cliptalk/dist")
 	r.Post("/video", sever.VideoProcessing())
 	r.Post("/remove", sever.RemoveWatermark())
 	r.Post("/video-file", sever.VideoFileProcessing())
